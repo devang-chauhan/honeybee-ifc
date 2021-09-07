@@ -1,6 +1,6 @@
 import ifcopenshell
 import ifcopenshell.geom
-import FreeCAD
+
 
 ifc = ifcopenshell.open("FamilyHouse_AC13.ifc")
 columns = ifc.by_type("IfcColumn")
