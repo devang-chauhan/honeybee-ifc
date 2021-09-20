@@ -1,6 +1,7 @@
 import ifcopenshell
 import ifcopenshell.geom
 import multiprocessing
+import pathlib
 
 
 from typing import List, Tuple, Dict, Union
@@ -16,11 +17,13 @@ from honeybee.aperture import Aperture
 from honeybee.shade import Shade
 from honeybee.door import Door
 
-file_1 = "D:\simulation\ifc\FamilyHouse_AC13.ifc"
-file_2 = "D:\simulation\ifc\Single family house.IFC"
-file_3 = "D:\simulation\ifc\SmallOffice_d_IFC2x3.ifc"
+file_1 = pathlib.Path("D:\simulation\ifc\FamilyHouse_AC13.ifc")
+file_2 = pathlib.Path("D:\simulation\ifc\SmallOffice_d_IFC2x3.ifc")
 
-ifc_file = ifcopenshell.open(file_1)
+file_path = file_2
+file_name = file_path.stem
+
+ifc_file = ifcopenshell.open(file_path)
 
 hb_faces = []
 hb_rooms = []
@@ -129,4 +132,4 @@ rooms, apertures, doors, shades = extract_hb_objects()
 
 hb_model = Model('House', rooms=rooms,
                  orphaned_apertures=apertures, orphaned_doors=doors, orphaned_shades=shades)
-hb_model.to_hbjson(name='ifc_apertures',)
+hb_model.to_hbjson(name=file_name,)
