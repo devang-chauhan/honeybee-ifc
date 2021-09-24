@@ -1,3 +1,4 @@
 *.ifc
+*.pyc
 test.py
 brep_data
