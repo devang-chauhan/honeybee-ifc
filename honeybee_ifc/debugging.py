@@ -17,8 +17,8 @@ from ladybug_geometry.geometry3d.ray import Ray3D
 
 
 # relative import
-from geometry import get_window_face3d, get_polyface3d
-from children import get_opening, get_back_face_center_location
+from .geometry import get_window_face3d, get_polyface3d
+from .apertures import get_opening, get_front_face_center_location
 
 
 def get_projected_window_and_space(guid: str, ifc_file: File, settings):
@@ -43,7 +43,7 @@ def get_projected_window_and_space(guid: str, ifc_file: File, settings):
     m4 = ifcopenshell.util.placement.get_local_placement(element.ObjectPlacement)
     # This is the mid-point of the lowest edge of the font face of the opening element
     location = tuple(map(float, m4[0:3, 3] * length_unit_factor))
-    back_face_center_location = get_back_face_center_location(
+    back_face_center_location = get_front_face_center_location(
         element, location, settings)
 
     # search tree
@@ -70,18 +70,11 @@ def get_projected_window_and_space(guid: str, ifc_file: File, settings):
     line = LineSegment3D.from_end_points(window_face.center, closest_point)
     moved_face = window_face.move(line.v)
 
-    if moved_face.plane.is_coplanar(plane):
-        pass
-    else:
-        # second method to project aperture
-        print("Window non coplanar")
+    # second method to project aperture
+    if not moved_face.plane.is_coplanar(plane):
         magnitude = nearest_face.plane.distance_to_point(window_face.center)
-        print("Window normal", window_face.normal)
         vector = window_face.normal.reverse().normalize() * magnitude
-
-        print("vector", vector)
         moved_face = window_face.move(vector)
-        print(window_face.center, moved_face.center)
 
     hb_apertures = [Aperture(clean_and_id_string('Aperture'), moved_face)]
 
