@@ -105,10 +105,29 @@ def get_projected_windows(windows: List[Element], settings: ifcopenshell.geom.se
             [face for face in polyface.faces], key=lambda x: x.plane.closest_point(
                 window_face.center).distance_to_point(window_face.center))[0]
 
+        # check if the nearest face is above or below the window face
+        if window_face.plane.is_point_above(nearest_face.center):
+            window_face = window_face.flip()
+
+        # first method to project aperture
         plane = nearest_face.plane
         closest_point = plane.closest_point(window_face.center)
         line = LineSegment3D.from_end_points(window_face.center, closest_point)
         moved_face = window_face.move(line.v)
+
+        if moved_face.plane.is_coplanar(plane):
+            pass
+        else:
+            # second method to project aperture
+            print("Window non coplanar")
+            magnitude = nearest_face.plane.distance_to_point(window_face.center)
+            print("Window normal", window_face.normal)
+            vector = window_face.normal.reverse().normalize() * magnitude
+
+            print("vector", vector)
+            moved_face = window_face.move(vector)
+            print(window_face.center, moved_face.center)
+
         hb_apertures.append(Aperture(clean_and_id_string('Aperture'), moved_face))
 
     return hb_apertures

@@ -17,13 +17,6 @@ from children import get_projected_windows
 from debugging import get_projected_window_and_space
 
 
-file_1 = pathlib.Path("D:\simulation\ifc\FamilyHouse_AC13.ifc")
-file_2 = pathlib.Path("D:\simulation\ifc\SmallOffice_d_IFC2x3.ifc")
-file_path = file_2
-file_name = file_path.stem
-ifc_file = ifcopenshell.open(file_path)
-
-
 def get_ifc_settings() -> ifcopenshell.geom.settings:
     """Get ifc geometry settings."""
     settings = ifcopenshell.geom.settings()
@@ -73,28 +66,34 @@ def get_shades(elements: List[Element], settings: ifcopenshell.geom.settings) ->
             for element in elements for face in get_polyface3d(element, settings).faces]
 
 
-start_time = time.monotonic()
-###############################################################################
-hb_rooms, hb_apertures, hb_doors, hb_shades, hb_orphaned_faces = [], [], [], [], []
+def export_hbjson(ifc_file_path: pathlib.Path) -> pathlib.Path:
+    """Export HBJSON from IFC"""
 
-# Elements extracted from IFC
-spaces, windows, doors, slabs = extract_elements(ifc_file, get_ifc_settings())
+    file_name = ifc_file_path.stem
+    ifc_file = ifcopenshell.open(ifc_file_path)
 
-hb_apertures = get_projected_windows(windows, get_ifc_settings(), ifc_file)
-hb_rooms = get_rooms(spaces, get_ifc_settings())
-hb_shades = get_shades(slabs, get_ifc_settings())
+    start_time = time.monotonic()
+    ###############################################################################
+    hb_rooms, hb_apertures, hb_doors, hb_shades, hb_orphaned_faces = [], [], [], [], []
 
-# Export for debugging
-# hb_apertures, hb_shades, hb_rooms = get_projected_window_and_space(
-#     '0nTLeWKhvBfeVwqDj0G5Rq', ifc_file, get_ifc_settings())
+    # Elements extracted from IFC
+    spaces, windows, doors, slabs = extract_elements(ifc_file, get_ifc_settings())
 
-hb_model = Model('House', rooms=hb_rooms, orphaned_faces=hb_orphaned_faces,
-                 orphaned_apertures=hb_apertures, orphaned_doors=hb_doors,
-                 orphaned_shades=hb_shades)
+    hb_apertures = get_projected_windows(windows, get_ifc_settings(), ifc_file)
+    hb_rooms = get_rooms(spaces, get_ifc_settings())
+    hb_shades = get_shades(slabs, get_ifc_settings())
 
-hb_model.to_hbjson(name=file_name)
-###############################################################################
-end_time = time.monotonic()
-print(f'Time elapsed: {timedelta(seconds = end_time - start_time)}')
+    # Export for debugging
+    # hb_apertures, hb_shades, hb_rooms = get_projected_window_and_space(
+    #     '3_sSXHRajEg8QBKxVZUvRS', ifc_file, get_ifc_settings())
 
-chosen_window = '1cN3lcP$19XxZTtlLeQ8qX'
+    hb_model = Model('House', rooms=hb_rooms, orphaned_faces=hb_orphaned_faces,
+                     orphaned_apertures=hb_apertures, orphaned_doors=hb_doors,
+                     orphaned_shades=hb_shades)
+
+    hb_model.to_hbjson(name=file_name)
+
+    ###############################################################################
+    end_time = time.monotonic()
+    print(f'Time elapsed: {timedelta(seconds = end_time - start_time)}')
+    return hb_model
