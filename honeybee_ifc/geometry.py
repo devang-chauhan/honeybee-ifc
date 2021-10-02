@@ -27,25 +27,17 @@ def get_window_face3d(polyface: Polyface3D) -> Face3D:
     return area_sorted_faces[0]
 
 
-def get_door_face3d(polyface: Polyface3D) -> Face3D:
+def get_door_face3d(door_polyface: Polyface3D, opening_polyface: Polyface3D) -> Face3D:
     """Get a simplified Face3D to represent door from a Polyface3D."""
-    face3ds = polyface.faces
+    face3ds = door_polyface.faces
     # sort faces based on area
     area_sorted_faces = sorted(
         face3ds, key=lambda x: x.area, reverse=True)
 
-    # first face is with the largest area
-    largest_area = area_sorted_faces[0].area
-
-    # Get the number of faces with the largest area
-    faces_with_largest_area = [
-        face.area for face in area_sorted_faces].count(largest_area)
-
-    # Select faces with the largest area
-    if faces_with_largest_area < 4:
-        faces_to_use = [face for face in area_sorted_faces if face.area > 0.01]
-    else:
-        faces_to_use = area_sorted_faces[:faces_with_largest_area]
+    # Select faces with the large area
+    faces_to_use = [face for face in area_sorted_faces if face.area >= 0.5]
+    if len(faces_to_use) == 0:
+        return get_face3d_from_opening(opening_polyface)
 
     # Get the plane of the first selected face
     selected_plane = faces_to_use[0].plane
@@ -60,6 +52,9 @@ def get_door_face3d(polyface: Polyface3D) -> Face3D:
     lines = list(polyface.naked_edges)
     polylines = Polyline3D.join_segments(lines, 0.01)
     face3d = Face3D(boundary=polylines[0].vertices)
+
+    if face3d.center.distance_to_point(door_polyface.center) > 0.1:
+        return get_face3d_from_opening(opening_polyface)
 
     return face3d
 
