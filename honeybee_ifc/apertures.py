@@ -1,16 +1,18 @@
 
 import ifcopenshell
+import random
 from ifcopenshell.util.unit import calculate_unit_scale
 from ifcopenshell.entity_instance import entity_instance as Element
 from ifcopenshell.file import file as File
 from ifcopenshell.util.placement import get_local_placement
 
-from ladybug_geometry.geometry3d import Point3D, Polyface3D, Face3D, LineSegment3D
+from ladybug_geometry.geometry3d import Point3D, Polyface3D, Face3D, LineSegment3D, Ray3D
 from honeybee.aperture import Aperture
+from honeybee.door import Door
 from honeybee.typing import clean_and_id_string
 from typing import List, Tuple
 
-from .geometry import get_polyface3d, get_door_face3d, get_window_face3d
+from .geometry import get_polyface3d, get_door_face3d, get_window_face3d, get_moved_face
 
 
 def get_opening(element: Element) -> Element:
@@ -108,12 +110,19 @@ def get_projected_windows(windows: List[Element], settings: ifcopenshell.geom.se
 
     for i in range(len(simplified_faces)):
         # Getting projcted window face
-        if len(nearest_space_polyfaces[i]) == 0:
+        if len(nearest_space_polyfaces[i]) == 1:
+            polyface = nearest_space_polyfaces[i][0]
+        elif len(nearest_space_polyfaces[i]) == 2:
+            polyface = nearest_space_polyfaces[i][random.randint(0, 1)]
+        else:
+            print(f'Window {elements[i]} did not export.')
             continue
-        polyface = nearest_space_polyfaces[i][0]
+
         window_face = simplified_faces[i]
+        parallel_faces = [
+            face for face in polyface.faces if not window_face.plane.intersect_plane(face.plane)]
         nearest_face = sorted(
-            [face for face in polyface.faces], key=lambda x: x.plane.closest_point(
+            [face for face in parallel_faces], key=lambda x: x.plane.closest_point(
                 window_face.center).distance_to_point(window_face.center))[0]
 
         # check if the nearest face is above or below the window face
