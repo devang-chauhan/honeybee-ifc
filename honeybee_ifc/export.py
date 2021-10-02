@@ -11,8 +11,8 @@ from honeybee.model import Model
 from honeybee.typing import clean_and_id_string
 
 from .geometry import get_polyface3d
-from .apertures import get_projected_windows
-from .debugging import get_projected_window_and_space
+from .apertures import get_projected_windows, get_projected_doors
+from .debugging import get_projected_window_and_space, get_projected_door_and_space
 from .helper import duration
 
 
@@ -80,12 +80,17 @@ def export_hbjson(ifc_file_path: pathlib.Path) -> pathlib.Path:
     spaces, windows, doors, slabs = extract_elements(ifc_file, get_ifc_settings())
 
     hb_apertures = get_projected_windows(windows, get_ifc_settings(), ifc_file)
+    hb_doors = get_projected_doors(doors, get_ifc_settings(), ifc_file)
     hb_rooms = get_rooms(spaces, get_ifc_settings())
     hb_shades = get_shades(slabs, get_ifc_settings())
 
     # Export for debugging
     # hb_apertures, hb_shades, hb_rooms = get_projected_window_and_space(
-    #     '2fxgxmAGP7RQ7D9uIfBTKW', ifc_file, get_ifc_settings())
+    #     '0nTLeWKhvBfeVwqDj0G5Rq', ifc_file, get_ifc_settings())
+
+    # Export for debugging
+    # hb_doors, hb_shades, hb_rooms = get_projected_door_and_space(
+    #     '3XHzrIsVb9WeHkXqAk0FLa', ifc_file, get_ifc_settings())
 
     hb_model = Model('House', rooms=hb_rooms, orphaned_faces=hb_orphaned_faces,
                      orphaned_apertures=hb_apertures, orphaned_doors=hb_doors,
