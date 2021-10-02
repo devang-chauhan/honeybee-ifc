@@ -18,6 +18,21 @@ def distance_to_closest_point_on_plane(point: Point3D, plane: Plane) -> float:
     return cp.distance_to_point(point)
 
 
+def get_face3d_from_opening(polyface: Polyface3D) -> Face3D:
+    """Get a simplified face3d at the center of the opening element.
+
+    The face of the opening with the largest area will be used.
+    """
+    face3ds = polyface.faces
+    # sort faces based on area
+    area_sorted_faces = sorted(
+        face3ds, key=lambda x: x.area, reverse=True)
+
+    line = LineSegment3D.from_end_points(area_sorted_faces[0].center, polyface.center)
+    moved_face = area_sorted_faces[0].move(line.v)
+    return moved_face
+
+
 def get_window_face3d(polyface: Polyface3D) -> Face3D:
     """Get a simplified Face3D to represent apertue from a Polyface3D."""
     face3ds = polyface.faces
@@ -103,3 +118,28 @@ def get_polyface3d(element: Element, settings: ifcopenshell.geom.settings) -> Po
         polyface3d = polyface3d.from_faces(
             [face.flip() for face in face3ds], tolerance=0.01)
         return polyface3d
+
+
+def get_moved_face(element_face: Face3D, nearest_face: Face3D) -> Face3D:
+    """Move the element face to the nearest face and get the moved face."""
+
+    # check if the nearest face is above or below the window face
+    if element_face.plane.is_point_above(nearest_face.center):
+        element_face = element_face.flip()
+
+    # first method to project aperture
+    plane = nearest_face.plane
+    closest_point = plane.closest_point(element_face.center)
+    line = LineSegment3D.from_end_points(element_face.center, closest_point)
+    # print(f'Door center {element_face.center} nearest_face_plane {plane}'
+    #       f' nearest_face_center{nearest_face.center}, line direction {line.v}')
+    moved_face = element_face.move(line.v)
+
+    # second method to project aperture
+    if not moved_face.plane.is_coplanar(plane):
+        print("Not coplanar")
+        magnitude = nearest_face.plane.distance_to_point(element_face.center)
+        vector = element_face.normal.reverse().normalize() * magnitude
+        moved_face = element_face.move(vector)
+
+    return moved_face
