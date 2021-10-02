@@ -68,7 +68,7 @@ def get_shades(elements: List[Element], settings: ifcopenshell.geom.settings) ->
 
 
 @duration
-def export_hbjson(ifc_file_path: pathlib.Path) -> pathlib.Path:
+def export_hbjson(ifc_file_path: pathlib.Path, folder: pathlib.Path = None) -> pathlib.Path:
     """Export HBJSON from IFC"""
 
     file_name = ifc_file_path.stem
@@ -96,6 +96,6 @@ def export_hbjson(ifc_file_path: pathlib.Path) -> pathlib.Path:
                      orphaned_apertures=hb_apertures, orphaned_doors=hb_doors,
                      orphaned_shades=hb_shades)
 
-    hb_model.to_hbjson(name=file_name)
+    hb_model.to_hbjson(name=file_name, folder=folder)
 
     return hb_model
