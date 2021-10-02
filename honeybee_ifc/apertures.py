@@ -144,3 +144,50 @@ def get_projected_windows(windows: List[Element], settings: ifcopenshell.geom.se
         hb_apertures.append(Aperture(clean_and_id_string('Aperture'), moved_face))
 
     return hb_apertures
+
+
+def get_projected_doors(doors: List[Element], settings: ifcopenshell.geom.settings,
+                        ifc_file: File) -> List[Aperture]:
+
+    elements = doors
+    hb_doors = []
+    # Get ifc opening elements and simplified faces for ifc doors and ifc windows
+    # opening_elements, simplified_faces = get_simplified_faces_and_opening_elements(
+    #     elements, settings)
+    opening_elements = [get_opening(element) for element in elements]
+    simplified_faces = [get_door_face3d(get_polyface3d(
+        elements[i], settings), get_polyface3d(opening_elements[i], settings)) for i in range(len(elements))]
+    # Get nearby ifc spaces for ifc windows
+    nearest_space_polyfaces = get_nearest_spaces(ifc_file, opening_elements, settings)
+
+    for i in range(len(simplified_faces)):
+
+        door_face = simplified_faces[i]
+
+        if len(nearest_space_polyfaces[i]) == 1:
+            polyfaces = nearest_space_polyfaces[i]
+            nearest_faces = sorted([face for face in polyfaces[0].faces],
+                                   key=lambda x: x.plane.closest_point(door_face.center).distance_to_point(door_face.center))
+            for face in nearest_faces:
+                line = LineSegment3D.from_end_points(
+                    door_face.center, face.plane.closest_point(door_face.center))
+                if face.intersect_line_ray(Ray3D(door_face.center, line.v)):
+                    nearest_face = face
+                    break
+        elif len(nearest_space_polyfaces[i]) == 2:
+            polyfaces = nearest_space_polyfaces[i]
+            nearest_faces = []
+            for polyface in polyfaces:
+                nearest_faces.append(
+                    sorted([face for face in polyface.faces],
+                           key=lambda x: x.plane.closest_point(door_face.center).distance_to_point(door_face.center))[0])
+            nearest_face = sorted(nearest_faces, key=lambda x: x.area)[-1]
+        else:
+            print(f'Door {elements[i]} did not export')
+            continue
+
+        moved_face = get_moved_face(door_face, nearest_face)
+
+        hb_doors.append(Door(clean_and_id_string('Door'), moved_face))
+
+    return hb_doors
