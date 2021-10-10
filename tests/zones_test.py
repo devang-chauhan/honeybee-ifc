@@ -4,7 +4,7 @@
 import pathlib
 import os
 import shutil
-from honeybee_ifc.export import export_close_gapped_zones
+from honeybee_ifc.export import export_close_gapped_zones, extract_elements, get_ifc_settings
 from honeybee.model import Model
 
 
@@ -22,7 +22,8 @@ def test_convert_to_hbjson():
         shutil.rmtree(temp_folder)
     os.mkdir(temp_folder)
 
-    hbjson2 = export_close_gapped_zones(file_2, temp_folder)
+    spaces = extract_elements(file_2, get_ifc_settings())[0]
+    hbjson2 = export_close_gapped_zones(file_2, spaces, get_ifc_settings(), temp_folder)
     assert isinstance(hbjson2, Model)
 
 
