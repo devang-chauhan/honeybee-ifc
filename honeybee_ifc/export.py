@@ -68,7 +68,7 @@ def get_shades(elements: List[Element], settings: ifcopenshell.geom.settings) ->
 
 
 @duration
-def export_hbjson(ifc_file_path: pathlib.Path, folder: pathlib.Path = None) -> None:
+def export_model(ifc_file_path: pathlib.Path, folder: pathlib.Path = None) -> Model:
     """Export HBJSON from IFC"""
 
     file_name = ifc_file_path.stem
@@ -89,8 +89,21 @@ def export_hbjson(ifc_file_path: pathlib.Path, folder: pathlib.Path = None) -> N
                      orphaned_apertures=hb_apertures, orphaned_doors=hb_doors,
                      orphaned_shades=hb_shades)
     hb_model.to_hbjson(name=file_name, folder=folder)
+    return hb_model
+
+
+def export_close_gapped_zones(ifc_file_path: pathlib.Path, folder: pathlib.Path = None) -> Model:
+    """Export close gapped zones."""
+    file_name = ifc_file_path.stem
+    ifc_file = ifcopenshell.open(ifc_file_path)
+
+    hb_rooms = []
+    # TODO: Think about getting this extract_elements out of this function
+    spaces = extract_elements(ifc_file, get_ifc_settings())[0]
+    hb_rooms = get_rooms(spaces, get_ifc_settings())
 
     # Export gap closed rooms for zones shell
     gap_closed_rooms = get_gap_closed_rooms(hb_rooms)
     shell_model = Model('Shell', rooms=gap_closed_rooms)
     shell_model.to_hbjson(name=file_name + '_gap_closed_zones', folder=folder)
+    return shell_model
