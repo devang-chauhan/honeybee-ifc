@@ -115,7 +115,7 @@ def get_polyface3d(element: Element, settings: ifcopenshell.geom.settings) -> Po
     if polyface3d.is_solid:
         return polyface3d
     else:
-        polyface3d = polyface3d.from_faces(
+        polyface3d = Polyface3D.from_faces(
             [face.flip() for face in face3ds], tolerance=0.01)
         return polyface3d
 
