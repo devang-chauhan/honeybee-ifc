@@ -1,31 +1,62 @@
 """Testing center point locations and normals for apertures in HBJSONs exported from
 two IFC file."""
-
+import shutil
+import os
 import pathlib
-from honeybee_ifc.export import export_hbjson
+from honeybee_ifc.export import export_model
 from honeybee.model import Model
-from ladybug_geometry.geometry3d.pointvector import Point3D, Vector3D
 
-# Tests for Family House IFC
-hb_model_house = Model.from_hbjson(pathlib.Path(
-    'tests/assets/temp/FamilyHouse_AC13.hbjson'))
-verified_hb_model_house = Model.from_hbjson(pathlib.Path(
+file_1 = pathlib.Path('tests/assets/ifc/FamilyHouse_AC13.ifc')
+file_2 = pathlib.Path('tests/assets/ifc/SmallOffice_d_IFC2x3.ifc')
+
+verified_house_model = Model.from_hbjson(pathlib.Path(
     'tests/assets/hbjsons/FamilyHouse_AC13.hbjson'))
+verified_office_model = Model.from_hbjson(pathlib.Path(
+    'tests/assets/hbjsons/SmallOffice_d_IFC2x3.hbjson'))
+
+
+def test_assets():
+    """Test that the files in assets remain."""
+    assert file_1.stem == 'FamilyHouse_AC13'
+    assert file_2.stem == 'SmallOffice_d_IFC2x3'
+
+
+def test_convert_to_hbjson():
+    """Convert IFC to HBJSONs to a temp folder."""
+    temp_folder = r'tests/assets/temp'
+
+    if os.path.isdir(temp_folder):
+        shutil.rmtree(temp_folder)
+    os.mkdir(temp_folder)
+
+    hbjson1 = export_model(file_1, temp_folder)
+    hbjson2 = export_model(file_2, temp_folder)
+
+    assert isinstance(hbjson1, Model)
+    assert isinstance(hbjson2, Model)
 
 
 def test_number_of_apertures_house():
     """Test the number of apertures."""
-    assert len(hb_model_house.apertures) == 31
+
+    house_model = Model.from_hbjson(pathlib.Path(
+        'tests/assets/temp/FamilyHouse_AC13.hbjson'))
+
+    assert len(house_model.apertures) == 31
 
 
 def test_center_points_house():
     """Make sure the center point location matches the expected location"""
+
+    house_model = Model.from_hbjson(pathlib.Path(
+        'tests/assets/temp/FamilyHouse_AC13.hbjson'))
+
     verified_center_points = [
-        aperture.geometry.center for aperture in verified_hb_model_house.apertures]
+        aperture.geometry.center for aperture in verified_house_model.apertures]
 
-    assert len(hb_model_house.apertures) == len(verified_center_points)
+    assert len(house_model.apertures) == len(verified_center_points)
 
-    for count, aperture in enumerate(hb_model_house.apertures):
+    for count, aperture in enumerate(house_model.apertures):
         center = aperture.geometry.center
         expected_center = verified_center_points[count]
         assert center.distance_to_point(expected_center) <= 0.01
@@ -34,38 +65,42 @@ def test_center_points_house():
 def test_normals_house():
     """Meke sure the normal of apertures matches expected normals."""
 
+    house_model = Model.from_hbjson(pathlib.Path(
+        'tests/assets/temp/FamilyHouse_AC13.hbjson'))
+
     verified_normals = [
-        aperture.geometry.normal for aperture in verified_hb_model_house.apertures]
+        aperture.geometry.normal for aperture in verified_house_model.apertures]
 
-    assert len(hb_model_house.apertures) == len(verified_normals)
+    assert len(house_model.apertures) == len(verified_normals)
 
-    for count, aperture in enumerate(hb_model_house.apertures):
+    for count, aperture in enumerate(house_model.apertures):
         normal = aperture.geometry.normal.normalize()
         vec = verified_normals[count]
         normal = aperture.geometry.normal.normalize()
         assert normal.angle(vec) <= 0.01
 
 
-# Tests for Small office IFC
-hb_model_office = Model.from_hbjson(pathlib.Path(
-    'tests/assets/temp/SmallOffice_d_IFC2x3.hbjson'))
-verified_hb_model_office = Model.from_hbjson(pathlib.Path(
-    'tests/assets/hbjsons/SmallOffice_d_IFC2x3.hbjson'))
-
-
 def test_number_of_apertures_office():
     """Test the number of apertures."""
-    assert len(hb_model_office.apertures) == 80
+
+    offie_model = Model.from_hbjson(pathlib.Path(
+        'tests/assets/temp/SmallOffice_d_IFC2x3.hbjson'))
+
+    assert len(offie_model.apertures) == 80
 
 
 def test_center_points_office():
     """Make sure the center point location matches the expected location"""
+
+    offie_model = Model.from_hbjson(pathlib.Path(
+        'tests/assets/temp/SmallOffice_d_IFC2x3.hbjson'))
+
     verified_center_points = [
-        aperture.geometry.center for aperture in verified_hb_model_office.apertures]
+        aperture.geometry.center for aperture in verified_office_model.apertures]
 
-    assert len(hb_model_office.apertures) == len(verified_center_points)
+    assert len(offie_model.apertures) == len(verified_center_points)
 
-    for count, aperture in enumerate(hb_model_office.apertures):
+    for count, aperture in enumerate(offie_model.apertures):
         center = aperture.geometry.center
         expected_center = verified_center_points[count]
         # Some of the apertures have more than one near by spaces(zones) and therefore,
@@ -76,14 +111,27 @@ def test_center_points_office():
 
 
 def center_normals_office():
-    """Meke sure the normal of apertures matches expected normals."""
+    """Make sure the normal of apertures matches expected normals."""
+
+    offie_model = Model.from_hbjson(pathlib.Path(
+        'tests/assets/temp/SmallOffice_d_IFC2x3.hbjson'))
 
     verified_normals = [
-        aperture.geometry.normal for aperture in verified_hb_model_office.apertures]
+        aperture.geometry.normal for aperture in verified_office_model.apertures]
 
-    assert len(hb_model_office.apertures) == len(verified_normals)
+    assert len(offie_model.apertures) == len(verified_normals)
 
-    for count, aperture in enumerate(hb_model_office.apertures):
+    for count, aperture in enumerate(offie_model.apertures):
         normal = aperture.geometry.normal.normalize()
         vec = verified_normals[count]
         assert normal.angle(vec) <= 0.01
+
+
+def test_remove_temp():
+    """Remove the temp folder."""
+    temp_folder = r'tests/assets/temp'
+
+    if os.path.isdir(temp_folder):
+        shutil.rmtree(temp_folder)
+
+    assert not os.path.isdir(temp_folder)
