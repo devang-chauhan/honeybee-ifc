@@ -1,4 +1,4 @@
-
+from typing import List
 from ladybug_geometry.geometry3d.line import LineSegment3D
 from ladybug_geometry.geometry3d.pointvector import Point3D
 from ladybug_geometry.geometry3d.polyface import Polyface3D
@@ -35,9 +35,8 @@ def move_polyface_vertices(face_indice, poly_dict, vector):
         poly_dict['vertices'][indice] = (moved_point.x, moved_point.y, moved_point.z)
 
 
-def move_faces(room, context_rooms):
-    polyface = room.geometry
-    context_polyfaces = [room.geometry for room in context_rooms]
+def move_faces(polyface, context_polyfaces):
+
     poly_dict = polyface.to_dict()
 
     faces = Polyface3D.get_outward_faces(polyface.faces, 0.01)
@@ -76,18 +75,21 @@ def move_faces(room, context_rooms):
     return Polyface3D.from_dict(poly_dict)
 
 
-def get_gap_closed_rooms(rooms):
+def get_gap_closed_rooms(polyfaces: List[Polyface3D]):
     moved_rooms = []
-    for i in range(len(rooms)):
+    for i in range(len(polyfaces)):
         # making a copy so that original list of rooms are not altered
-        rooms_copy = [room for room in rooms]
+        polyfaces_copy = [polyface for polyface in polyfaces]
         # room in a list of rooms
-        room = rooms_copy[i]
+        polyface = polyfaces_copy[i]
         # remove the above room from the list
-        rooms_copy.pop(i)
+        polyfaces_copy.pop(i)
         # list of the rest of the rooms
-        context_rooms = rooms_copy
-        moved_polyface = move_faces(room, context_rooms)
-        room_to_append = Room.from_polyface3d(rooms[i].display_name, moved_polyface)
+        context_polyfaces = polyfaces_copy
+        moved_polyface = move_faces(polyface, context_polyfaces)
+        if not moved_polyface.is_solid:
+            faces = Polyface3D.get_outward_faces(moved_polyface.faces, 0.01)
+            polyface = Polyface3D.from_faces(faces, 0.01)
+        room_to_append = Room.from_polyface3d('Room_'+str(i), polyface)
         moved_rooms.append(room_to_append)
     return moved_rooms
