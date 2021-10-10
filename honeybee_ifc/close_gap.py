@@ -1,7 +1,6 @@
-from ladybug_geometry.geometry3d.ray import Ray3D
+
 from ladybug_geometry.geometry3d.line import LineSegment3D
-from ladybug_geometry.geometry3d.pointvector import Point3D, Vector3D
-from ladybug_geometry.geometry3d.face import Face3D
+from ladybug_geometry.geometry3d.pointvector import Point3D
 from ladybug_geometry.geometry3d.polyface import Polyface3D
 from honeybee.room import Room
 from honeybee.typing import clean_and_id_string
@@ -41,7 +40,8 @@ def move_faces(room, context_rooms):
     context_polyfaces = [room.geometry for room in context_rooms]
     poly_dict = polyface.to_dict()
 
-    for count, face in enumerate(polyface.faces):
+    faces = Polyface3D.get_outward_faces(polyface.faces, 0.01)
+    for count, face in enumerate(faces):
 
         line = line_at_center(face.center, face.normal)
         intersection_point = intersection_point_with_context_polysface(
@@ -56,8 +56,10 @@ def move_faces(room, context_rooms):
             mesh_face_centers = mesh.face_centroids
             for mesh_face_center in mesh_face_centers:
                 line = line_at_center(mesh_face_center, face.normal)
+
                 intersection_point = intersection_point_with_context_polysface(
                     line, context_polyfaces)
+
                 if not intersection_point:
                     continue
                 else:
@@ -74,17 +76,18 @@ def move_faces(room, context_rooms):
     return Polyface3D.from_dict(poly_dict)
 
 
-moved_rooms = []
-for i in range(len(rooms)):
-    # making a copy so that original list of rooms are not altered
-    rooms_copy = [room for room in rooms]
-    # room in a list of rooms
-    room = rooms_copy[i]
-    # remove the above room from the list
-    rooms_copy.pop(i)
-    # list of the rest of the rooms
-    context_rooms = rooms_copy
-    print(room)
-    moved_polyface = move_faces(room, context_rooms)
-    room_to_append = Room.from_polyface3d(clean_and_id_string('Room'), moved_polyface)
-    moved_rooms.append(room_to_append)
+def get_gap_closed_rooms(rooms):
+    moved_rooms = []
+    for i in range(len(rooms)):
+        # making a copy so that original list of rooms are not altered
+        rooms_copy = [room for room in rooms]
+        # room in a list of rooms
+        room = rooms_copy[i]
+        # remove the above room from the list
+        rooms_copy.pop(i)
+        # list of the rest of the rooms
+        context_rooms = rooms_copy
+        moved_polyface = move_faces(room, context_rooms)
+        room_to_append = Room.from_polyface3d(rooms[i].display_name, moved_polyface)
+        moved_rooms.append(room_to_append)
+    return moved_rooms
