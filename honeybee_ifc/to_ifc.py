@@ -17,7 +17,7 @@ def template_variables():
     creator = "honeybee-ifc"
     organization = "Ladybug Tools"
     application = "IfcOpenShell"
-    application_version = "0.5"
+    application_version = "0.0.0"
     project_global_id = create_guid()
     project_name = "Hello Wall"
     return file_name, time_string, creator, organization, application, application_version, \
@@ -30,7 +30,8 @@ def template_ifc(file_name, time_string, creator, organization, application,
     ISO-10303-21;
     HEADER;
     FILE_DESCRIPTION(('ViewDefinition [CoordinationView]'),'2;1');
-    FILE_NAME('{file_name}','{time_string}',('{creator}'),('{organization}'),'{application}','{application}','');
+    FILE_NAME('{file_name}','{time_string}',('{creator}'),('{organization}'),\
+        '{application}','{application}','');
     FILE_SCHEMA(('IFC2X3'));
     ENDSEC;
     DATA;
@@ -64,7 +65,6 @@ def template_ifc(file_name, time_string, creator, organization, application,
     with open(temp_filename, "wb") as f:
         f.write(b)
 
-    print(temp_filename)
     ifcfile = ifcopenshell.open(temp_filename)
     ifcfile.write(file_name)
 
