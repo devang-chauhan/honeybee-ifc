@@ -3,7 +3,7 @@ two IFC file."""
 import shutil
 import os
 import pathlib
-from honeybee_ifc.export import export_model, extract_elements, get_ifc_settings
+from honeybee_ifc.to_hbjson import export_model, extract_elements, get_ifc_settings
 from honeybee.model import Model
 
 file_1 = pathlib.Path('tests/assets/ifc/FamilyHouse_AC13.ifc')

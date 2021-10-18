@@ -4,7 +4,7 @@
 import pathlib
 import os
 import shutil
-from honeybee_ifc.export import export_close_gapped_zones, extract_elements, get_ifc_settings
+from honeybee_ifc.to_hbjson import export_close_gapped_zones, extract_elements, get_ifc_settings
 from honeybee.model import Model
 
 
