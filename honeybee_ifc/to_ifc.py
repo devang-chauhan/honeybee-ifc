@@ -1,14 +1,19 @@
+"""Write .ifc files."""
+
 import uuid
 import time
 import tempfile
 import ifcopenshell
 
 
-def create_guid():
+def _create_guid():
+    """Create a unique Guid."""
     return ifcopenshell.guid.compress(uuid.uuid1().hex)
 
 
 def template_variables():
+    """Create variables to put into the template."""
+
     file_name = "hello_wall.ifc"
     time_stamp = time.time()
     time_now = time.gmtime(time_stamp)
@@ -18,14 +23,17 @@ def template_variables():
     organization = "Ladybug Tools"
     application = "IfcOpenShell"
     application_version = "0.0.0"
-    project_global_id = create_guid()
+    project_global_id = _create_guid()
     project_name = "Hello Wall"
-    return file_name, time_string, creator, organization, application, application_version, \
-        time_stamp, project_global_id, project_name
+
+    return file_name, time_string, creator, organization, application,\
+        application_version, time_stamp, project_global_id, project_name
 
 
 def template_ifc(file_name, time_string, creator, organization, application,
                  application_version, time_stamp, project_global_id, project_name):
+    """Write a template .ifc file."""
+
     template = f"""
     ISO-10303-21;
     HEADER;
@@ -59,11 +67,11 @@ def template_ifc(file_name, time_string, creator, organization, application,
     END-ISO-10303-21;
     """
 
-    b = template.encode('utf-8')
-    # Write the template to a temporary file
-    temp_handle, temp_filename = tempfile.mkstemp(suffix=".ifc")
+    # convert the text into binary
+    binary = template.encode('utf-8')
+    temp_filename = tempfile.mkstemp(suffix=".ifc")[1]
     with open(temp_filename, "wb") as f:
-        f.write(b)
+        f.write(binary)
 
     ifcfile = ifcopenshell.open(temp_filename)
     ifcfile.write(file_name)
