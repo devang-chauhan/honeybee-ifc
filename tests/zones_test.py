@@ -1,6 +1,7 @@
 
 """Testing center point locations and the volume of close gapped zones."""
 
+import pytest
 import pathlib
 import os
 import shutil
@@ -12,6 +13,13 @@ from honeybee.model import Model
 file_2 = pathlib.Path('tests/assets/ifc/SmallOffice_d_IFC2x3.ifc')
 verified_model = Model.from_hbjson(pathlib.Path(
     'tests/assets/hbjsons/SmallOffice_d_IFC2x3_gap_closed_zones.hbjson'))
+
+
+@pytest.fixture
+def model():
+    """Returning the Honeybee model that will be used in multiple unit tests."""
+    return Model.from_hbjson(pathlib.Path(
+        'tests/assets/temp_gap_closed_zones/SmallOffice_d_IFC2x3_gap_closed_zones.hbjson'))
 
 
 def test_convert_to_hbjson():
@@ -27,22 +35,14 @@ def test_convert_to_hbjson():
     assert isinstance(hbjson2, Model)
 
 
-def test_center_points():
+def test_center_points(model):
     """Make sure the center point of the generated zones match the zones in the verified model."""
-
-    model = Model.from_hbjson(pathlib.Path(
-        'tests/assets/temp_gap_closed_zones/SmallOffice_d_IFC2x3_gap_closed_zones.hbjson'))
-
     for i, room in enumerate(model.rooms):
         assert room.center.distance_to_point(verified_model.rooms[i].center) <= 0.01
 
 
-def test_volumes():
+def test_volumes(model):
     """Make sure the volumes of the generated zones match the zones in the verified model."""
-
-    model = Model.from_hbjson(pathlib.Path(
-        'tests/assets/temp_gap_closed_zones/SmallOffice_d_IFC2x3_gap_closed_zones.hbjson'))
-
     for i, room in enumerate(model.rooms):
         assert room.volume == verified_model.rooms[i].volume
 
