@@ -106,6 +106,12 @@ def get_face3ds_from_shape(shape: Part.Shape) -> List[Face3D]:
     return face3ds
 
 
+def get_face3d(element: Element, settings: ifcopenshell.geom.settings) -> Face3D:
+    """Get a polyface3d from an planar ifc element."""
+    part_shape = get_shape(element, settings)
+    return get_face3d_from_shape(part_shape.Faces[0])
+
+
 def get_polyface3d(element: Element, settings: ifcopenshell.geom.settings) -> Polyface3D:
     """Get a polyface3d from an ifc element."""
     part_shape = get_shape(element, settings)
