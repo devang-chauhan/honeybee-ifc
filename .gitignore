@@ -1,4 +1,5 @@
 *.pyc
+.coverage
 test.py
 model.ifc
 brep_data
