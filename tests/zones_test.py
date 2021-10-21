@@ -5,7 +5,8 @@ import pytest
 import pathlib
 import os
 import shutil
-from honeybee_ifc.to_hbjson import export_close_gapped_zones, extract_elements, get_ifc_settings
+from honeybee_ifc.to_hbjson import export_close_gapped_zones, extract_elements,\
+    get_ifc_settings
 from honeybee.model import Model
 
 
@@ -36,13 +37,15 @@ def test_convert_to_hbjson():
 
 
 def test_center_points(model):
-    """Make sure the center point of the generated zones match the zones in the verified model."""
+    """Make sure the center point of the generated zones match the zones 
+    in the verified model."""
     for i, room in enumerate(model.rooms):
         assert room.center.distance_to_point(verified_model.rooms[i].center) <= 0.01
 
 
 def test_volumes(model):
-    """Make sure the volumes of the generated zones match the zones in the verified model."""
+    """Make sure the volumes of the generated zones match the zones 
+    in the verified model."""
     for i, room in enumerate(model.rooms):
         assert room.volume == verified_model.rooms[i].volume
 
