@@ -231,17 +231,29 @@ class Ifc:
                 self.create_guid(), self.owner_history, "Space",
                 "Zone", None, placement, shape, None, 'ELEMENT')
 
+            self.ifc_file.createIfcRelContainedInSpatialStructure(self.create_guid(
+            ), self.owner_history, "Building Storey Container", None, [space], self.building_storey)
+
         elif element_type.value == 'window':
             window = self.ifc_file.createIfcWindow(
                 self.create_guid(), self.owner_history, "Window",
                 "Window", None, placement, shape, None, None)
+
+            self.ifc_file.createIfcRelContainedInSpatialStructure(self.create_guid(
+            ), self.owner_history, "Building Storey Container", None, [window], self.building_storey)
 
         elif element_type.value == 'door':
             door = self.ifc_file.createIfcDoor(
                 self.create_guid(), self.owner_history, "Door",
                 "Door", None, placement, shape, None, None)
 
+            self.ifc_file.createIfcRelContainedInSpatialStructure(self.create_guid(
+            ), self.owner_history, "Building Storey Container", None, [door], self.building_storey)
+
         elif element_type.value == 'slab':
             slab = self.ifc_file.createIfcSlab(
                 self.create_guid(), self.owner_history, "Slab",
                 "Slab", None, placement, shape, None, None)
+
+            self.ifc_file.createIfcRelContainedInSpatialStructure(self.create_guid(
+            ), self.owner_history, "Building Storey Container", None, [slab], self.building_storey)
