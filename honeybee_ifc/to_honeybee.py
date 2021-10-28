@@ -9,10 +9,13 @@ from ifcopenshell.util.placement import get_local_placement
 from ladybug_geometry.geometry3d import Point3D, Polyface3D, Face3D, LineSegment3D, Ray3D
 from honeybee.aperture import Aperture
 from honeybee.door import Door
+from honeybee.face import Face
+from honeybee.room import Room
+from honeybee.facetype import face_types
 from honeybee.typing import clean_and_id_string
 from typing import List, Tuple
 
-from .geometry import get_polyface3d, get_door_face3d, get_window_face3d, get_moved_face
+from .geometry import get_face3d, get_polyface3d, get_door_face3d, get_window_face3d, get_moved_face
 
 
 def get_opening(element: Element) -> Element:
@@ -191,3 +194,28 @@ def get_projected_doors(doors: List[Element], settings: ifcopenshell.geom.settin
         hb_doors.append(Door(clean_and_id_string('Door'), moved_face))
 
     return hb_doors
+
+
+# def get_walls(walls: List[Element], settings: ifcopenshell.geom.settings) -> List[Face]:
+#     """Convert IfcWall elements in to honeybee wall objects."""
+
+#     hb_walls = []
+#     for wall in walls:
+#         face3ds = get_polyface3d(wall, settings).faces
+#         for face3d in face3ds:
+#             hb_walls.append(Face(clean_and_id_string('Wall'), face3d, face_types.wall))
+
+#     return hb_walls
+
+
+def get_walls(walls: List[Element], settings: ifcopenshell.geom.settings) -> List[Room]:
+    """Get honeybee rooms from IfcSpace elements."""
+    rooms = []
+    for i, space in enumerate(walls):
+        polyface = get_polyface3d(space, settings)
+        if not polyface.is_solid:
+            faces = Polyface3D.get_outward_faces(polyface.faces, 0.01)
+            polyface3d = Polyface3D.from_faces(faces, 0.01)
+            room = Room.from_polyface3d('Wall_'+str(i), polyface3d)
+            rooms.append(room)
+    return rooms
