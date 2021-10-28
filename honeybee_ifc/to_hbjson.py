@@ -11,7 +11,7 @@ from honeybee.model import Model
 from honeybee.typing import clean_and_id_string
 
 from .geometry import get_polyface3d
-from .apertures import get_projected_windows, get_projected_doors
+from .to_honeybee import get_projected_windows, get_projected_doors, get_walls
 from .helper import duration
 from .close_gap import get_gap_closed_rooms
 
@@ -45,13 +45,13 @@ def get_shades(elements: List[Element], settings: ifcopenshell.geom.settings) ->
 
 def extract_elements(ifc_file_path: pathlib.Path,
                      settings: ifcopenshell.geom.settings) -> Tuple[
-                         List[Element], List[Element], List[Element], List[Element]]:
+                         List[Element], List[Element], List[Element], List[Element], List[Element]]:
     """Extract elements from an IFC file."""
 
     ifc_file = ifcopenshell.open(ifc_file_path)
-    spaces, windows, doors, slabs = [], [], [], []
+    spaces, walls, windows, doors, slabs = [], [], [], [], []
 
-    elements = ('IfcSpace', 'IfcWindow', 'IfcDoor', 'IfcSlab')
+    elements = ('IfcSpace', 'IfcWallStandardCase', 'IfcWindow', 'IfcDoor', 'IfcSlab')
 
     iterator = ifcopenshell.geom.iterator(
         settings, ifc_file, multiprocessing.cpu_count(), include=elements)
@@ -64,6 +64,9 @@ def extract_elements(ifc_file_path: pathlib.Path,
             if element.is_a() == 'IfcSpace':
                 spaces.append(element)
 
+            elif element.is_a() == 'IfcWallStandardCase':
+                walls.append(element)
+
             elif element.is_a() == 'IfcWindow':
                 windows.append(element)
 
@@ -73,25 +76,26 @@ def extract_elements(ifc_file_path: pathlib.Path,
             elif element.is_a() == 'IfcSlab':
                 slabs.append(element)
 
-    return spaces, windows, doors, slabs
+    return spaces, walls, windows, doors, slabs
 
 
 @duration
 def export_model(
-        ifc_file_path: pathlib.Path, spaces: List[Element], windows: List[Element],
+        ifc_file_path: pathlib.Path, spaces: List[Element], walls: List[Element], windows: List[Element],
         doors: List[Element], slabs: List[Element], folder: pathlib.Path = None) -> Model:
     """Export HBJSON from IFC"""
 
     file_name = ifc_file_path.stem
     ifc_file = ifcopenshell.open(ifc_file_path)
 
-    hb_rooms, hb_apertures, hb_doors, hb_shades, hb_orphaned_faces = [], [], [], [], []
+    hb_rooms, hb_walls, hb_apertures, hb_doors, hb_shades = [], [], [], [], []
+    hb_walls = get_walls(walls, get_ifc_settings())
     hb_apertures = get_projected_windows(windows, get_ifc_settings(), ifc_file)
     hb_doors = get_projected_doors(doors, get_ifc_settings(), ifc_file)
     hb_rooms = get_rooms(spaces, get_ifc_settings())
     hb_shades = get_shades(slabs, get_ifc_settings())
 
-    hb_model = Model('House', rooms=hb_rooms, orphaned_faces=hb_orphaned_faces,
+    hb_model = Model('House', rooms=hb_rooms + hb_walls,
                      orphaned_apertures=hb_apertures, orphaned_doors=hb_doors,
                      orphaned_shades=hb_shades)
 
