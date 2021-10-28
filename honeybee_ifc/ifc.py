@@ -9,6 +9,8 @@ from typing import List, Tuple
 
 import ifcopenshell
 from ifcopenshell.entity_instance import entity_instance as Element
+from ifcopenshell.api.project.append_asset import Usecase
+from .to_hbjson import get_ifc_settings
 
 
 class ElementType(Enum):
@@ -16,6 +18,7 @@ class ElementType(Enum):
     door = 'door'
     slab = 'slab'
     space = 'space'
+    wall = 'wall'
 
 
 class Ifc:
@@ -257,3 +260,21 @@ class Ifc:
 
             self.ifc_file.createIfcRelContainedInSpatialStructure(self.create_guid(
             ), self.owner_history, "Building Storey Container", None, [slab], self.building_storey)
+
+        elif element_type.value == 'wall':
+            wall = self.ifc_file.createIfcWallStandardCase(
+                self.create_guid(), self.owner_history, "Wall",
+                "wall", None, placement, shape)
+
+            self.ifc_file.createIfcRelContainedInSpatialStructure(self.create_guid(
+            ), self.owner_history, "Building Storey Container", None, [wall], self.building_storey)
+
+    def add_walls(self, walls: List[Element]) -> None:
+        """Add walls to an ifc file object.
+
+        Args:
+            walls: A list of ifc wall elements.
+        """
+
+        for wall in walls:
+            self.ifc_file.add(wall)
