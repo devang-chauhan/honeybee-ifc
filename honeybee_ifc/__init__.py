@@ -1,1 +1,1 @@
-"""Library for Converting IFC to HBJSON."""
+"""Library for translating IFC to HBJSON."""
