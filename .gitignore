@@ -2,4 +2,5 @@
 .coverage
 test.py
 model.ifc
+model.html
 brep_data
