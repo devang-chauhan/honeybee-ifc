@@ -3,8 +3,8 @@
 import shutil
 import os
 import pathlib
-from honeybee_ifc.to_hbjson import export_model, extract_elements, get_ifc_settings
-from honeybee.model import Model
+from honeybee_ifc.model import Model
+from honeybee.model import Model as HBModel
 
 file_1 = pathlib.Path('tests/assets/ifc/FamilyHouse_AC13.ifc')
 file_2 = pathlib.Path('tests/assets/ifc/SmallOffice_d_IFC2x3.ifc')
@@ -26,11 +26,8 @@ def test_convert_to_hbjson():
         shutil.rmtree(temp_folder)
     os.mkdir(temp_folder)
 
-    spaces_1, windows_1, doors_1, slabs_1 = extract_elements(file_1, get_ifc_settings())
-    hbjson1 = export_model(file_1, spaces_1, windows_1, doors_1, slabs_1, temp_folder)
+    hbjson_1 = Model(file_1).to_hbjson(target_folder=temp_folder)
+    hbjson_2 = Model(file_2).to_hbjson(target_folder=temp_folder)
 
-    spaces_2, windows_2, doors_2, slabs_2 = extract_elements(file_2, get_ifc_settings())
-    hbjson2 = export_model(file_2, spaces_2, windows_2, doors_2, slabs_2, temp_folder)
-
-    assert isinstance(hbjson1, Model)
-    assert isinstance(hbjson2, Model)
+    assert pathlib.Path(hbjson_1).name == file_1.stem + '.hbjson'
+    assert pathlib.Path(hbjson_2).name == file_2.stem + '.hbjson'
