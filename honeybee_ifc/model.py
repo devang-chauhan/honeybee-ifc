@@ -93,8 +93,8 @@ class Model:
                 elif element.is_a() == 'IfcDoor':
                     self.doors.append(Door(element, self.settings))
 
-    def get_nearby_spaces(self, element: OpeningElement,
-                          search_radius: float = 0.5) -> List[List[Space]]:
+    def _get_nearby_spaces(self, element: OpeningElement,
+                           search_radius: float = 0.5) -> List[List[Space]]:
         """Get nearby spaces.
 
         Args:
@@ -142,11 +142,11 @@ class Model:
 
         return near_by_spaces
 
-    def project_windows_on_nearby_space(self) -> List[Face3D]:
+    def _project_windows_on_nearby_space(self) -> List[Face3D]:
         """Move the windows to the nearby spaces."""
 
         simplified_faces = [window.face3d for window in self.windows]
-        nearby_spaces = self.get_nearby_spaces(OpeningElement.window)
+        nearby_spaces = self._get_nearby_spaces(OpeningElement.window)
 
         moved_faces = []
         for i in range(len(simplified_faces)):
@@ -174,11 +174,11 @@ class Model:
 
         return moved_faces
 
-    def project_doors_on_nearby_space(self) -> List[Face3D]:
+    def _project_doors_on_nearby_space(self) -> List[Face3D]:
         """Move the doors to the nearby spaces."""
 
         simplified_faces = [door.face3d for door in self.doors]
-        nearby_spaces = self.get_nearby_spaces(OpeningElement.door)
+        nearby_spaces = self._get_nearby_spaces(OpeningElement.door)
 
         moved_faces = []
         for i in range(len(simplified_faces)):
@@ -237,10 +237,10 @@ class Model:
             'Room'), space.polyface3d) for space in self.spaces]
 
         apertures = [HBAperture(clean_and_id_string('Aperture'), face)
-                     for face in self.project_windows_on_nearby_space()]
+                     for face in self._project_windows_on_nearby_space()]
 
         doors = [HBDoor(clean_and_id_string('door'), face)
-                 for face in self.project_doors_on_nearby_space()]
+                 for face in self._project_doors_on_nearby_space()]
 
         shades = [HBShade(clean_and_id_string('Shade'), face)
                   for slab in self.slabs for face in slab.face3ds]
