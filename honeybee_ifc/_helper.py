@@ -75,6 +75,25 @@ def get_face3ds_from_shape(shape: Part.Shape) -> List[Face3D]:
     return face3ds
 
 
+def get_nearby_face(simplified_face: Face3D, space):
+
+    # Dict of Face3D : Honeybee Face structure
+    faces = {face.geometry: face for face in space.Room.faces}
+
+    # find faces parallel to the window face
+    parallel_faces = [
+        face for face in faces if not
+        simplified_face.plane.intersect_plane(face.plane)]
+
+    # find the nearest face from the parallel faces
+    nearby_face = sorted(
+        parallel_faces,
+        key=lambda x: x.center.distance_to_point(simplified_face.center))[0]
+    hb_face = faces[nearby_face]
+
+    return nearby_face, hb_face
+
+
 def move_face(element_face: Face3D, nearest_face: Face3D) -> Face3D:
     """Move the element face to the nearest face and get the moved face."""
 
