@@ -1,8 +1,13 @@
 """Honeybee-IFC Space object."""
 
+from typing import List
+from honeybee.room import Room as HBRoom
+from honeybee.typing import clean_and_id_string
 import ifcopenshell
 from ifcopenshell.entity_instance import entity_instance as IfcElement
 from .element import Element
+from .door import Door
+from .window import Window
 
 
 class Space(Element):
@@ -17,3 +22,9 @@ class Space(Element):
         super().__init__(space, settings)
         self.space = space
         self.settings = settings
+        self.room = HBRoom.from_polyface3d(clean_and_id_string('Room'), self.polyface3d)
+
+    @property
+    def Room(self) -> HBRoom:
+        """Honeybee object."""
+        return self.room
