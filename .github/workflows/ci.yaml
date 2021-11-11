@@ -14,6 +14,8 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+
       - name: prepare context
         id: prepare-context
         env:
