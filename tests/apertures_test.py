@@ -12,18 +12,6 @@ verified_office_model = Model.from_hbjson(pathlib.Path(
     'tests/assets/hbjsons/SmallOffice_d_IFC2x3.hbjson'))
 
 
-@pytest.fixture
-def house_model():
-    return Model.from_hbjson(pathlib.Path(
-        'tests/assets/temp/FamilyHouse_AC13.hbjson'))
-
-
-@pytest.fixture
-def office_model():
-    return Model.from_hbjson(pathlib.Path(
-        'tests/assets/temp/SmallOffice_d_IFC2x3.hbjson'))
-
-
 def test_number_of_apertures_house(house_model):
     """Test the number of apertures."""
 
