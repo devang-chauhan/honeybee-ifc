@@ -1,0 +1,18 @@
+#! /usr/bin/env bash
+
+freecad_name="${FREECAD_NAME:-FreeCAD.AppImage}"
+ifcopenshell_name="${IFCOPENSHELL_NAME:-ifcopenshell.zip}"
+
+echo "Downloading FreeCAD from: ${FREECAD_APPIMAGE:?}"
+echo "Downloading IfcOpenShell from: ${IFCOPENSHELL_ZIP:?}"
+
+wget -O "${freecad_name}" -q "${FREECAD_APPIMAGE}"
+wget -O "${ifcopenshell_name}" -q "${IFCOPENSHELL_ZIP}"
+
+chmod +x "${freecad_name}"
+
+./$freecad_name --appimage-extract > /dev/null
+
+unzip "${ifcopenshell_name}" > /dev/null
+
+ls -hal
