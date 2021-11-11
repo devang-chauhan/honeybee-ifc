@@ -15,7 +15,6 @@ from ifcopenshell.util.placement import get_local_placement
 
 from ladybug_geometry.geometry3d import LineSegment3D, Face3D, Ray3D
 from honeybee.model import Model as HBModel
-from honeybee.room import Room as HBRoom
 from honeybee.aperture import Aperture as HBAperture
 from honeybee.door import Door as HBDoor
 from honeybee.shade import Shade as HBShade
@@ -46,7 +45,7 @@ class Model:
         self.settings = self._ifc_settings()
         self.unit_factor = calculate_unit_scale(self.ifc_file)
         self.elements = ('IfcSpace', 'IfcWindow', 'IfcDoor', 'IfcSlab')
-        self.spaces = []
+        self.spaces = {}
         self.doors = []
         self.windows = []
         self.slabs = []
@@ -79,7 +78,7 @@ class Model:
 
                 # convert to a honeybee object directly
                 if element.is_a() == 'IfcSpace':
-                    self.spaces.append(Space(element, self.settings))
+                    self.spaces[element.GlobalId] = Space(element, self.settings)
 
                 # convert to a honeybee object directly
                 elif element.is_a() == 'IfcSlab':
@@ -137,7 +136,7 @@ class Model:
             if not all(len(item) > 0 for item in ifc_spaces):
                 ifc_spaces = tree.select(location, extend=search_radius)
 
-            spaces = [Space(space, self.settings) for space in ifc_spaces]
+            spaces = [self.spaces[space.GlobalId] for space in ifc_spaces]
             near_by_spaces.append(spaces)
 
         return near_by_spaces
@@ -145,47 +144,54 @@ class Model:
     def _project_windows_on_nearby_space(self) -> List[Face3D]:
         """Move the windows to the nearby spaces."""
 
+        # simplified window faces and their nearby spaces
         simplified_faces = [window.face3d for window in self.windows]
         nearby_spaces = self._get_nearby_spaces(OpeningElement.window)
 
-        moved_faces = []
         for i in range(len(simplified_faces)):
             # get the nearby space
             if len(nearby_spaces[i]) == 1:
-                polyface = nearby_spaces[i][0].polyface3d
+                nearby_space = nearby_spaces[i][0]
             elif len(nearby_spaces[i]) == 2:
-                polyface = nearby_spaces[i][random.randint(0, 1)].polyface3d
+                nearby_space = nearby_spaces[i][random.randint(0, 1)]
             else:
                 print(f'Window {self.windows[i].guid} did not export.')
                 continue
 
-            # Find the face to move the nearby face
             window_face = simplified_faces[i]
+            faces = {face.geometry: face for face in nearby_space.Room.faces}
+            moved_faces = []
+            # find faces parallel to the window face
             parallel_faces = [
-                face for face in polyface.faces if not
+                face for face in faces if not
                 window_face.plane.intersect_plane(face.plane)]
+
+            # find the nearest face from the parallel faces
             nearby_face = sorted(
                 [face for face in parallel_faces],
                 key=lambda x: x.plane.closest_point(window_face.center)
                 .distance_to_point(window_face.center))[0]
 
-            # move the face
-            moved_faces.append(move_face(window_face, nearby_face))
-
-        return moved_faces
+            moved_face = move_face(window_face, nearby_face)
+            if nearby_face.is_sub_face(moved_face, tolerance=0.01, angle_tolerance=0.0):
+                aperture = HBAperture(clean_and_id_string('Aperture'), moved_face)
+                faces[nearby_face].add_aperture(aperture)
+                print(nearby_space.guid)
+            else:
+                moved_faces.append(moved_face)
 
     def _project_doors_on_nearby_space(self) -> List[Face3D]:
         """Move the doors to the nearby spaces."""
 
+        # simplified door faces and their nearby spaces
         simplified_faces = [door.face3d for door in self.doors]
         nearby_spaces = self._get_nearby_spaces(OpeningElement.door)
 
         moved_faces = []
         for i in range(len(simplified_faces)):
-
+            # Find the face to move the nearby face
             door_face = simplified_faces[i]
 
-            # Find the face to move the nearby face
             if len(nearby_spaces[i]) == 1:
                 polyface = nearby_spaces[i][0].polyface3d
                 nearby_faces = sorted(
@@ -233,17 +239,22 @@ class Model:
 
         rooms, apertures, doors, shades = [], [], [], []
 
-        rooms = [HBRoom.from_polyface3d(clean_and_id_string(
-            'Room'), space.polyface3d) for space in self.spaces]
-
-        apertures = [HBAperture(clean_and_id_string('Aperture'), face)
-                     for face in self._project_windows_on_nearby_space()]
+        moved_window_faces = self._project_windows_on_nearby_space()
+        if moved_window_faces:
+            apertures = [HBAperture(clean_and_id_string('Aperture'), face)
+                         for face in self._project_windows_on_nearby_space()]
 
         doors = [HBDoor(clean_and_id_string('door'), face)
                  for face in self._project_doors_on_nearby_space()]
 
         shades = [HBShade(clean_and_id_string('Shade'), face)
                   for slab in self.slabs for face in slab.face3ds]
+
+        space = self.spaces['1rNa_qDJzCP8_iCA$lyC4W']
+        for i, face in enumerate(space.Room.faces):
+            print(i, face, face.apertures)
+
+        rooms = [space.Room for space in self.spaces.values()]
 
         hb_model = HBModel('Model', rooms=rooms, orphaned_apertures=apertures,
                            orphaned_doors=doors, orphaned_shades=shades)
