@@ -10,9 +10,32 @@ on:
       - master
 
 jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: prepare context
+        id: prepare-context
+        env:
+          FREECAD_APPIMAGE: 'https://github.com/FreeCAD/FreeCAD/releases/download/0.19.2/FreeCAD_0.19-24291-Linux-Conda_glibc2.12-x86_64.AppImage'
+          IFCOPENSHELL_ZIP: 'https://s3.amazonaws.com/ifcopenshell-builds/ifcopenshell-python-38-v0.6.0-721fe47-linux64.zip'
+        run: |
+          ./scripts/prepare_docker_context
+
+      - name: build container image
+        id: docker-build
+        run: |
+          docker build --target=dev -t honeybee-ifc:latest-dev .
+
+      - name: run tests
+        id: test
+        run: |
+          docker run -v --entrypoint=bash honeybee-ifc:latest-dev -c './scripts/test'
+
   deploy:
     name: Deploy to Github
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v2
 
@@ -29,33 +52,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: download packages
-        id: download-packages
-        env:
-          FREECAD_APPIMAGE: 'https://github.com/FreeCAD/FreeCAD/releases/download/0.19.2/FreeCAD_0.19-24291-Linux-Conda_glibc2.12-x86_64.AppImage'
-          FREECAD_NAME: 'FreeCAD.AppImage'
-          IFCOPENSHELL_ZIP: 'https://s3.amazonaws.com/ifcopenshell-builds/ifcopenshell-python-38-v0.6.0-517b819-linux64.zip'
-          IFCOPENSHELL_NAME: 'ifcopenshell.zip'
-
-        run: |
-          wget -O "${FREECAD_NAME}" -q "${FREECAD_APPIMAGE}" # Get package
-
-          chmod +x "${FREECAD_NAME}" # Make executable
-
-          ./$FREECAD_NAME --appimage-extract # Extract filesystem
-
-          wget -O $"{IFCOPENSHELL_NAME}" -q "${IFCOPENSHELL_ZIP}"
-
-          unzip "${IFCOPENSHELL_NAME}"
-
-          ls -hal
-
-      - name: build container image
-        id: docker-build
-        run: |
-          docker build --target=dev -t honeybee-ifc:latest-dev .
-
-      - name: run tests
-        id: test
-        run: |
-          docker run -v $(realpath .):/exec --entrypoint=bash python -m pytest -v
