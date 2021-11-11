@@ -26,5 +26,5 @@ class Space(Element):
 
     @property
     def Room(self) -> HBRoom:
-        """Honeybee object."""
+        """A Honeybee Room object."""
         return self.room
