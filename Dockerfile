@@ -6,11 +6,13 @@ WORKDIR ${WORKDIR}
 
 ENV FREECAD_LIB_DIR=/usr/lib/FreeCAD
 
-ENV PYTHONPATH="${PYTHONPATH}:${FREECAD_LIB_DIR}"
+ENV IFCOPENSHELL_LIB_DIR=/ifcopenshell
+
+ENV PYTHONPATH="${PYTHONPATH}:${FREECAD_LIB_DIR}:${IFCOPENSHELL_LIB_DIR}"
 
 COPY squashfs-root/usr/lib/ ${FREECAD_LIB_DIR}/
 
-COPY ifcopenshell/ ${WORKDIR}/ifcopenshell/
+COPY ifcopenshell/ ${IFCOPENSHELL_LIB_DIR}/
 
 COPY honeybee_ifc ${WORKDIR}/honeybee_ifc/
 
@@ -23,5 +25,9 @@ FROM main as dev
 ARG WORKDIR=/exec
 
 COPY dev-requirements.txt ${WORKDIR}
+
+COPY tests/ ${WORKDIR}/tests/
+
+COPY scripts/ ${WORKDIR}}/scripts/
 
 RUN pip install -r dev-requirements.txt
