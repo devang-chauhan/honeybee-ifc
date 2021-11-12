@@ -20,7 +20,7 @@ jobs:
         id: prepare-context
         env:
           FREECAD_APPIMAGE: 'https://github.com/FreeCAD/FreeCAD/releases/download/0.19.2/FreeCAD_0.19-24291-Linux-Conda_glibc2.12-x86_64.AppImage'
-          IFCOPENSHELL_ZIP: 'https://s3.amazonaws.com/ifcopenshell-builds/ifcopenshell-python-38-v0.6.0-721fe47-linux64.zip'
+          IFCOPENSHELL_ZIP: 'https://s3.amazonaws.com/ifcopenshell-builds/ifcopenshell-python-37-v0.6.0-721fe47-linux64.zip'
         run: |
           ./scripts/prepare_docker_context
 
