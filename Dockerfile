@@ -1,4 +1,4 @@
-FROM python:3.8 as main
+FROM python:3.7 as main
 
 ARG WORKDIR=/exec
 
