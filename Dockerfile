@@ -6,9 +6,9 @@ WORKDIR ${WORKDIR}
 
 ENV FREECAD_LIB_DIR=/usr/lib/FreeCAD
 
-ENV IFCOPENSHELL_LIB_DIR=/ifcopenshell
+ENV IFCOPENSHELL_LIB_DIR=${WORKDIR}/ifcopenshell
 
-ENV PYTHONPATH="${PYTHONPATH}:${FREECAD_LIB_DIR}:${IFCOPENSHELL_LIB_DIR}"
+ENV PYTHONPATH="${PYTHONPATH}:${FREECAD_LIB_DIR}"
 
 COPY squashfs-root/usr/lib/ ${FREECAD_LIB_DIR}/
 
@@ -28,6 +28,6 @@ COPY dev-requirements.txt ${WORKDIR}
 
 COPY tests/ ${WORKDIR}/tests/
 
-COPY scripts/ ${WORKDIR}}/scripts/
+COPY scripts/ ${WORKDIR}/scripts/
 
 RUN pip install -r dev-requirements.txt

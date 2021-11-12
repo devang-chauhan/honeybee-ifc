@@ -32,7 +32,7 @@ jobs:
       - name: run tests
         id: test
         run: |
-          docker run --entrypoint=bash honeybee-ifc:latest-dev '-c ./scripts/test'
+          docker run --entrypoint=bash honeybee-ifc:latest-dev ./scripts/test
 
   deploy:
     name: Deploy to Github
