@@ -21,7 +21,6 @@ from honeybee.shade import Shade as HBShade
 from honeybee.typing import clean_and_id_string
 
 from .window import Window
-from .door import Door
 from .space import Space
 from .slab import Slab
 from ._helper import move_face, get_nearby_face
@@ -44,7 +43,7 @@ class Model:
         self.ifc_file = ifcopenshell.open(self.ifc_file_path)
         self.settings = self._ifc_settings()
         self.unit_factor = calculate_unit_scale(self.ifc_file)
-        self.elements = ('IfcSpace', 'IfcWindow', 'IfcDoor', 'IfcSlab')
+        self.elements = ('IfcSpace', 'IfcWindow', 'IfcSlab')
         self.spaces = {}
         self.doors = []
         self.windows = []
@@ -85,9 +84,6 @@ class Model:
 
                 elif element.is_a() == 'IfcWindow':
                     self.windows.append(Window(element, self.settings))
-
-                elif element.is_a() == 'IfcDoor':
-                    self.doors.append(Door(element, self.settings))
 
     def _get_nearby_spaces(self, element: OpeningElement,
                            search_radius: float = 0.5) -> List[List[Space]]:
@@ -221,82 +217,6 @@ class Model:
 
         return moved_face3ds
 
-    # def _project_doors_on_nearby_space(self) -> List[Face3D]:
-    #     """Move the Face3D representation of Door object to the nearby Space object.
-
-    #     If the Face3D can be a sub-face of any of the face of
-    #     the Room property of the Space object then the Face3D will be turned into a
-    #     Honeybee Door object and will be added to a particular face of the Room as a
-    #     child.
-
-    #     The Face3Ds that cannot be a sub-face of any of the face of the Room property
-    #     of the Space object then the Face3D will be returned.
-    #     """
-
-    #     # simplified door faces and their nearby spaces
-    #     simplified_faces = [door.face3d for door in self.doors]
-    #     nearby_spaces = self._get_nearby_spaces(OpeningElement.door)
-
-    #     moved_face3ds = []
-    #     for i in range(len(simplified_faces)):
-    #         # Find the face to move the nearby face
-    #         door_face = simplified_faces[i]
-
-    #         if len(nearby_spaces[i]) == 1:
-    #             nearby_space = nearby_spaces[i][0]
-    #             faces = {face.geometry: face for face in nearby_space.Room.faces}
-    #             nearby_faces = sorted(
-    #                 faces,
-    #                 key=lambda x: x.plane.closest_point(door_face.center).
-    #                 distance_to_point(door_face.center))
-    #             for face in nearby_faces:
-    #                 line = LineSegment3D.from_end_points(
-    #                     door_face.center, face.plane.closest_point(door_face.center))
-    #                 if face.intersect_line_ray(Ray3D(door_face.center, line.v)):
-    #                     nearby_face = face
-    #                     hb_face = faces[nearby_face]
-    #                     break
-
-    #         # This is useful in case when a door is in an angled wall and the two sides
-    #         # of the wall are not the same in size.
-    #         elif len(nearby_spaces[i]) == 2:
-    #             spaces = nearby_spaces[i]
-    #             faces = {
-    #                 face.geometry: face for space in spaces
-    #                 for face in space.Room.faces}
-    #             nearby_faces = []
-    #             for space in spaces:
-    #                 # find faces parallel to the window face
-    #                 parallel_faces = [
-    #                     face for face in space.Room.geometry.faces if not
-    #                     door_face.plane.intersect_plane(face.plane)]
-
-    #                 nearby_faces.append(sorted(
-    #                     parallel_faces,
-    #                     key=lambda x: x.center.distance_to_point(door_face.center))[0])
-
-    #             nearby_face = sorted(nearby_faces, key=lambda x: x.area)[-1]
-    #             hb_face = faces[nearby_face]
-    #         else:
-    #             print(f'Door {self.doors[i].guid} did not export')
-    #             continue
-
-    #         # Move the Face3D to the nearest face
-    #         moved_face3d = move_face(door_face, nearby_face)
-
-    #         # If the moved face can be a subface of the nearby face, add as a
-    #         # Honeybee Door object
-    #         scaled_face3d = moved_face3d.scale(0.95, moved_face3d.center)
-    #         if nearby_face.is_sub_face(scaled_face3d, tolerance=0.01, angle_tolerance=0.0):
-    #             door = HBDoor(clean_and_id_string('Door'), scaled_face3d)
-    #             hb_face.add_door(door)
-    #         else:
-    #             print(nearby_faces)
-    #             print(nearby_faces[0].center, nearby_faces[1].center)
-    #             moved_face3ds.append(moved_face3d)
-
-    #     return moved_face3ds
-
     def to_hbjson(self, target_folder: str = '.', file_name: str = None) -> str:
         """Write the model to an HBJSON file.
 
@@ -320,15 +240,6 @@ class Model:
         if len(moved_window_faces) > 0:
             apertures = [HBAperture(clean_and_id_string('Aperture'), face)
                          for face in moved_window_faces]
-
-        # # Try adding the simplified Face3D representation of IfcDoor objects to the
-        # # Room property of the nearby Space object.
-        # moved_door_faces = self._project_doors_on_nearby_space()
-        # # If any of the Face3Ds cannot be added to the Rooms, add them as orphaned
-        # # Doors
-        # if len(moved_door_faces) > 0:
-        #     doors = [HBDoor(clean_and_id_string('Door'), face)
-        #              for face in moved_door_faces]
 
         shades = [HBShade(clean_and_id_string('Shade'), face)
                   for slab in self.slabs for face in slab.face3ds]
