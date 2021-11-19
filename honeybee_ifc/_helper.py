@@ -15,23 +15,26 @@ import FreeCAD
 import Part
 
 
+def report_time(seconds):
+    if seconds <= 60:
+        return f'{round(seconds, 2)} seconds.'
+    elif 60 < seconds <= 3600:
+        return f'{round(seconds / 60, 2)} minutes.'
+    else:
+        return f'{round(seconds / 3600, 2)} hours.'
+
+
 def duration(func):
     """Decorator to measure time used by a function."""
     @wraps(func)
     def wrapper(*args, **kwargs):
         """This is a wrapper function."""
-        start_time = time.monotonic()
+        start = time.perf_counter()
         result = func(*args, **kwargs)
-        end_time = time.monotonic()
-        print(f'Time elapsed: {timedelta(seconds = end_time - start_time)}')
+        finish = time.perf_counter()
+        print(f'Finished in {report_time(finish-start)}')
         return result
     return wrapper
-
-
-def distance_to_closest_point_on_plane(point: Point3D, plane: Plane) -> float:
-    """Get the distance from a point to a point on a plane."""
-    cp = plane.closest_point(point)
-    return cp.distance_to_point(point)
 
 
 def get_shape(element: Element, settings: ifcopenshell.geom.settings) -> Part.Shape:
@@ -73,25 +76,3 @@ def get_face3ds_from_shape(shape: Part.Shape) -> List[Face3D]:
     """Get a list of Face3D from a FreeCAD shape object."""
     face3ds = [get_face3d_from_shape(face) for face in shape.Faces]
     return face3ds
-
-
-def move_face(element_face: Face3D, nearest_face: Face3D) -> Face3D:
-    """Move the element face to the nearest face and get the moved face."""
-
-    # check if the nearest face is above or below the element face
-    if element_face.plane.is_point_above(nearest_face.center):
-        element_face = element_face.flip()
-
-    # first method to project aperture
-    plane = nearest_face.plane
-    closest_point = plane.closest_point(element_face.center)
-    line = LineSegment3D.from_end_points(element_face.center, closest_point)
-    moved_face = element_face.move(line.v)
-
-    # second method to project aperture
-    if not moved_face.plane.is_coplanar(plane):
-        magnitude = nearest_face.plane.distance_to_point(element_face.center)
-        vector = element_face.normal.reverse().normalize() * magnitude
-        moved_face = element_face.move(vector)
-
-    return moved_face
