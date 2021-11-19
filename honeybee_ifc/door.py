@@ -44,7 +44,7 @@ class Door(Element):
                   ' door opening. This door might not be translated correctly.')
             # This means a door or a window is not parallel to the opening.
             area_sorted_faces = sorted(
-                self.polyface3d.faces, key=lambda x: x.area, reverse=True)
+                self.opening.polyface3d.faces, key=lambda x: x.area, reverse=True)
             face3d = area_sorted_faces[0]
             line = LineSegment3D.from_end_points(
                 face3d.center, self.opening.polyface3d.center)
