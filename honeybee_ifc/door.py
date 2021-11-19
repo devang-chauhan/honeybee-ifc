@@ -2,10 +2,11 @@
 
 import ifcopenshell
 from ifcopenshell.entity_instance import entity_instance as IfcElement
-from ladybug_geometry.geometry3d import Face3D, Polyface3D, Polyline3D
+from ladybug_geometry.geometry3d import Face3D, LineSegment3D
+from honeybee.door import Door as HBDoor
+from honeybee.typing import clean_and_id_string
 from .element import Element
 from .opening import Opening
-from ._helper import distance_to_closest_point_on_plane
 
 
 class Door(Element):
@@ -23,40 +24,43 @@ class Door(Element):
 
     @property
     def opening(self) -> Opening:
-        """Honeybee-IFC Opening object for the IfcOpeningElement of an IfcDoor"""
-        return Opening(self.element.FillsVoids[0].RelatingOpeningElement, self.settings)
+        """Honeybee-IFC Element for the IfcOpeningElement of an IfcWindow"""
+        return Opening(self.element.FillsVoids[0].RelatingOpeningElement)
 
     @property
     def face3d(self) -> Face3D:
         """A Face3D representation."""
-        # sort faces based on area
-        area_sorted_faces = sorted(
-            self.polyface3d.faces, key=lambda x: x.area, reverse=True)
+        return sorted(self.polyface3d.faces, key=lambda x: x.area, reverse=True)[0]
 
-        # Select faces with the large area
-        faces_to_use = [face for face in area_sorted_faces if face.area >= 0.5]
-        # if none of the faces are large enough, use the center face of the opening
-        # element of the door
-        if len(faces_to_use) == 0:
-            return self.opening.get_face3d_at_center()
+    def moved_opening_face3d(self) -> Face3D:
+        """Get a simplified Face3D representation that is moved to the center of the opening."""
 
-        # Get the plane of the first selected face
-        selected_plane = faces_to_use[0].plane
+        parallel_faces = [
+            face for face in self.opening.polyface3d.faces if
+            face.normal.normalize().is_equivalent(self.face3d.plane.n.normalize(), 0.001)]
 
-        # Select the faces with the same plane
-        selected_faces = [
-            face for face in faces_to_use
-            if distance_to_closest_point_on_plane(face.center, selected_plane) < 0.01]
+        if not parallel_faces:
+            print(f'In Door {self.guid}, the door panel does not seem parallel to the'
+                  ' door opening. This door might not be translated correctly.')
+            # This means a door or a window is not parallel to the opening.
+            area_sorted_faces = sorted(
+                self.polyface3d.faces, key=lambda x: x.area, reverse=True)
+            face3d = area_sorted_faces[0]
+            line = LineSegment3D.from_end_points(
+                face3d.center, self.opening.polyface3d.center)
+            # move the largest face to the center of the opening element
+            return face3d.move(line.v)
+        else:
+            # use the larges face in the opening if the door or the window is not parallel
+            area_sorted_faces = sorted(
+                parallel_faces, key=lambda x: x.area, reverse=True)
 
-        # Merge faces
-        polyface = Polyface3D.from_faces(selected_faces, 0.01)
-        lines = list(polyface.naked_edges)
-        polylines = Polyline3D.join_segments(lines, 0.01)
-        face3d = Face3D(boundary=polylines[0].vertices)
+            face3d = area_sorted_faces[0]
+            line = LineSegment3D.from_end_points(
+                face3d.center, self.polyface3d.center)
+            # move the largest face to the center of the opening element
+            return face3d.move(line.v)
 
-        # if the door is open and generated face3ed is far from the center of the door
-        # use the center face of the opening element
-        if face3d.center.distance_to_point(self.polyface3d.center) > 0.1:
-            return self.opening.get_face3d_at_center()
-
-        return face3d
+    def to_honeybee(self) -> HBDoor:
+        """Get a Honeybee Aperture object."""
+        return HBDoor(clean_and_id_string('Door'), self.moved_opening_face3d())
