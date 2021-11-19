@@ -5,77 +5,58 @@ import pytest
 
 
 def test_number_of_apertures(office_model):
-    """Test the number of apertures."""
     assert len(office_model.apertures) == 80
 
 
 def test_number_of_doors(office_model):
-    """Test the number of apertures."""
     assert len(office_model.doors) == 33
 
 
-# def test_center_points_house(house_model):
-#     """Make sure the center point location matches the expected location"""
-
-#     verified_center_points = [
-#         aperture.geometry.center for aperture in verified_house_model.apertures]
-
-#     assert len(house_model.apertures) == len(verified_center_points)
-
-#     for count, aperture in enumerate(house_model.apertures):
-#         center = aperture.geometry.center
-#         expected_center = verified_center_points[count]
-#         assert center.distance_to_point(expected_center) <= 0.01
+def test_number_of_shades(office_model):
+    assert len(office_model.shades) == 36
 
 
-# def test_normals_house(house_model):
-#     """Meke sure the normal of apertures matches expected normals."""
-
-#     verified_normals = [
-#         aperture.geometry.normal for aperture in verified_house_model.apertures]
-
-#     assert len(house_model.apertures) == len(verified_normals)
-
-#     for count, aperture in enumerate(house_model.apertures):
-#         normal = aperture.geometry.normal.normalize()
-#         vec = verified_normals[count]
-#         normal = aperture.geometry.normal.normalize()
-#         assert normal.angle(vec) <= 0.01
+def test_number_of_faces(office_model):
+    assert len(office_model.faces) == 3299
 
 
-# def test_number_of_apertures_office(office_model):
-#     """Test the number of apertures."""
-
-#     assert len(office_model.apertures) == 80
+def test_number_of_grids(office_model):
+    assert len(office_model.properties.radiance.sensor_grids) == 29
 
 
-# def test_center_points_office(office_model):
-#     """Make sure the center point location matches the expected location"""
+def test_aperture_center_normal(office_model, verified_office_model):
+    """Make sure the center point location & normal matches the verified model."""
 
-#     verified_center_points = [
-#         aperture.geometry.center for aperture in verified_office_model.apertures]
+    verified_center_points = [
+        aperture.geometry.center for aperture in verified_office_model.apertures]
 
-#     assert len(office_model.apertures) == len(verified_center_points)
+    verified_normals = [
+        aperture.geometry.normal for aperture in verified_office_model.apertures]
 
-#     for count, aperture in enumerate(office_model.apertures):
-#         center = aperture.geometry.center
-#         expected_center = verified_center_points[count]
-#         # Some of the apertures have more than one near by spaces(zones) and therefore,
-#         # the location of the apertue is decided by randomly choosing the wall of the
-#         # either of the nearby space. Therefore, the validation distance here is 0.2
-#         # which close to the wall thickness.
-#         assert center.distance_to_point(expected_center) < 0.2
+    for count, aperture in enumerate(office_model.apertures):
+        center = aperture.geometry.center
+        expected_center = verified_center_points[count]
+        assert center.distance_to_point(expected_center) < 0.01
+
+        normal = aperture.geometry.normal.normalize()
+        vec = verified_normals[count]
+        assert normal.angle(vec) <= 0.01
 
 
-# def center_normals_office(office_model):
-#     """Make sure the normal of apertures matches expected normals."""
+def test_door_center_normal(office_model, verified_office_model):
+    """Make sure the center point location & normal matches the verified model."""
 
-#     verified_normals = [
-#         aperture.geometry.normal for aperture in verified_office_model.apertures]
+    verified_center_points = [
+        door.geometry.center for door in verified_office_model.doors]
 
-#     assert len(office_model.apertures) == len(verified_normals)
+    verified_normals = [
+        door.geometry.normal for door in verified_office_model.doors]
 
-#     for count, aperture in enumerate(office_model.apertures):
-#         normal = aperture.geometry.normal.normalize()
-#         vec = verified_normals[count]
-#         assert normal.angle(vec) <= 0.01
+    for count, door in enumerate(office_model.doors):
+        center = door.geometry.center
+        expected_center = verified_center_points[count]
+        assert center.distance_to_point(expected_center) < 0.01
+
+        normal = door.geometry.normal.normalize()
+        vec = verified_normals[count]
+        assert normal.angle(vec) <= 0.01
