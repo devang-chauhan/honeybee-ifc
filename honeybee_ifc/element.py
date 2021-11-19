@@ -16,10 +16,17 @@ class Element:
         settings: An ifcopenshell.geom.settings object.
     """
 
-    def __init__(self, element: IfcElement, settings: ifcopenshell.geom.settings):
+    def __init__(self, element: IfcElement, settings: ifcopenshell.geom.settings = None):
         self.element = element
-        self.settings = settings
+        self.settings = settings or self._settings()
         self._polyface3d = self._get_polyface3d()
+
+    @staticmethod
+    def _settings() -> ifcopenshell.geom.settings:
+        settings = ifcopenshell.geom.settings()
+        settings.set(settings.USE_WORLD_COORDS, True)
+        settings.set(settings.USE_BREP_DATA, True)
+        return settings
 
     @property
     def ifc_element(self):
@@ -38,6 +45,7 @@ class Element:
 
     def _get_polyface3d(self) -> Polyface3D:
         """Polyface3D object from an IFC element."""
+
         shape = get_shape(self.element, self.settings)
         face3ds = get_face3ds_from_shape(shape)
         polyface3d = Polyface3D.from_faces(face3ds, tolerance=0.01)
