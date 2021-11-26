@@ -32,11 +32,6 @@ class Door(Element):
     def polyface3d(self) -> Polyface3D:
         return self._polyface3d
 
-    @property
-    def face3d(self) -> Face3D:
-        """A Face3D representation."""
-        return sorted(self.polyface3d.faces, key=lambda x: x.area, reverse=True)[0]
-
     def moved_opening_face3d(self) -> Face3D:
         """Get a simplified Face3D representation that is moved to the center of the opening."""
 
@@ -55,16 +50,16 @@ class Door(Element):
                 face3d.center, self.opening.polyface3d.center)
             # move the largest face to the center of the opening element
             return face3d.move(line.v)
-        else:
-            # use the larges face in the opening if the door or the window is not parallel
-            area_sorted_faces = sorted(
-                parallel_faces, key=lambda x: x.area, reverse=True)
 
-            face3d = area_sorted_faces[0]
-            line = LineSegment3D.from_end_points(
-                face3d.center, self.polyface3d.center)
-            # move the largest face to the center of the opening element
-            return face3d.move(line.v)
+        # use the larges face in the opening if the door or the window is not parallel
+        area_sorted_faces = sorted(
+            parallel_faces, key=lambda x: x.area, reverse=True)
+
+        face3d = area_sorted_faces[0]
+        line = LineSegment3D.from_end_points(
+            face3d.center, self.polyface3d.center)
+        # move the largest face to the center of the opening element
+        return face3d.move(line.v)
 
     def to_honeybee(self) -> HBDoor:
         """Get a Honeybee Aperture object."""

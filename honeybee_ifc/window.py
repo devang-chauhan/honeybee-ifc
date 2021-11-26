@@ -36,11 +36,6 @@ class Window(Element):
     def polyface3d(self) -> Polyface3D:
         return self._polyface3d
 
-    @property
-    def face3d(self) -> Face3D:
-        """A Face3D representation."""
-        return sorted(self.polyface3d.faces, key=lambda x: x.area, reverse=True)[0]
-
     def moved_opening_face3d(self) -> Face3D:
         """Get a simplified Face3D representation that is moved to the center of the opening."""
         # faces parallel to the plane
