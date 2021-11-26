@@ -32,14 +32,16 @@ class Model:
         self.ifc_file = ifcopenshell.open(self.ifc_file_path)
         self.settings = self._ifc_settings()
         self.unit_factor = calculate_unit_scale(self.ifc_file)
-        self.elements = ('IfcSlab', 'IfcColumn', 'IfcWindow', 'IfcDoor', 'IfcSpace')
+        # self.elements = ('IfcSlab', 'IfcColumn', 'IfcWindow', 'IfcDoor',
+        #                  'IfcSpace')
+        self.elements = ('IfcDoor',)
         self.spaces = []
         self.doors = []
         self.windows = []
         self.slabs = []
         self.walls = []
         self.shades = []
-        self._extract_walls()
+        # self._extract_walls()
         self._extract_elements()
 
     @staticmethod
@@ -69,22 +71,37 @@ class Model:
                 shape = iterator.get()
                 element = self.ifc_file.by_guid(shape.guid)
 
-                if element.is_a() == 'IfcWindow':
-                    self.windows.append(Window(element, self.settings))
+                # if element.is_a() == 'IfcWindow':
+                #     try:
+                #         self.windows.append(Window(element))
+                #     except Exception as e:
+                #         print("Window", e, element.GlobalId)
 
-                elif element.is_a() == 'IfcDoor':
-                    self.doors.append(Door(element, self.settings))
+                if element.is_a() == 'IfcDoor':
+                    try:
+                        self.doors.append(Door(element))
+                    except Exception as e:
+                        print("Door", e, element.GlobalId)
 
-                elif element.is_a() == 'IfcSlab':
-                    self.slabs.append(
-                        Slab(element, element.PredefinedType, self.settings))
+                # elif element.is_a() == 'IfcSlab':
+                #     try:
+                #         self.slabs.append(
+                #             Slab(element, element.PredefinedType))
+                #     except Exception as e:
+                #         print("Slab", e, element.GlobalId)
 
-                elif element.is_a() == 'IfcColumn':
-                    self.shades.append(
-                        Shade(element, self.settings))
+                # elif element.is_a() == 'IfcColumn':
+                #     try:
+                #         self.shades.append(
+                #             Shade(element))
+                #     except Exception as e:
+                #         print("Shade", e, element.GlobalId)
 
-                elif element.is_a() == 'IfcSpace':
-                    self.spaces.append(Space(element, self.settings))
+                # elif element.is_a() == 'IfcSpace':
+                #     try:
+                #         self.spaces.append(Space(element))
+                #     except Exception as e:
+                #         print("Space", e, element.GlobalId)
 
                 else:
                     raise ValueError(f'Unsupported element type: {element.is_a()}')
@@ -93,8 +110,12 @@ class Model:
         """Extract IfcWall elements from the IFC file."""
         # Don't use BREP data here. Which will give original trinagulated meshes.
         selector = Selector()
-        self.walls = [Wall(element) for element in selector.parse(
-            self.ifc_file, '.IfcWall | .IfcWallStandardCase')]
+        for element in selector.parse(self.ifc_file, '.IfcWall | .IfcWallStandardCase'):
+            if len(element.IsDecomposedBy) > 0:
+                for part in element.IsDecomposedBy[0].RelatedObjects:
+                    self.walls.append(Wall(part))
+            else:
+                self.walls.append(Wall(element))
 
     def to_hbjson(self, target_folder: str = '.', file_name: str = None) -> str:
         """Write the model to an HBJSON file.
@@ -109,29 +130,32 @@ class Model:
             Path to the written HBJSON file.
         """
 
-        faces = []
+        print("Starting Honeybee translation! \n")
+        faces, apertures, doors, shades, grids = [], [], [], [], []
+
         for wall in self.walls:
             faces.extend(wall.to_honeybee())
-
+        print("walls done")
         apertures = [window.to_honeybee() for window in self.windows]
+        print("apertures done")
         doors = [door.to_honeybee() for door in self.doors]
-
+        print("doors done")
         for slab in self.slabs:
             faces.extend(slab.to_honeybee())
-
+        print("slabs done")
         shades = []
         for shade in self.shades:
             shades.extend(shade.to_honeybee())
-
+        print("shade done")
         grids = []
         for space in self.spaces:
             grids.append(space.get_grids(size=0.3))
-
+        print("grids done")
         hb_model = HBModel('Model', orphaned_faces=faces,
                            orphaned_apertures=apertures, orphaned_doors=doors,
                            orphaned_shades=shades)
 
-        hb_model.properties.radiance.add_sensor_grids(grids)
+        # hb_model.properties.radiance.add_sensor_grids(grids)
 
         if not file_name:
             file_name = self.ifc_file_path.stem
