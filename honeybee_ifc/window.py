@@ -5,6 +5,7 @@ from ifcopenshell.entity_instance import entity_instance as IfcElement
 from ladybug_geometry.geometry3d import Face3D, LineSegment3D
 from honeybee.aperture import Aperture
 from honeybee.typing import clean_and_id_string
+from ladybug_geometry.geometry3d.polyface import Polyface3D
 from .element import Element
 from .opening import Opening
 
@@ -17,15 +18,23 @@ class Window(Element):
         settings: An IFC settings object.
     """
 
-    def __init__(self, window: IfcElement, settings: ifcopenshell.geom.settings) -> None:
-        super().__init__(window, settings)
+    def __init__(self, window: IfcElement) -> None:
+        super().__init__(window)
         self.window = window
-        self.settings = settings
+        self._polyface3d = self.to_polyface3d()
 
     @property
     def opening(self) -> Opening:
         """Honeybee-IFC Element for the IfcOpeningElement of an IfcWindow"""
-        return Opening(self.element.FillsVoids[0].RelatingOpeningElement)
+        try:
+            return Opening(self.element.FillsVoids[0].RelatingOpeningElement)
+        except Exception as e:
+            print(e, self.guid)
+            raise ValueError('FillsVoids is empty for this window.')
+
+    @property
+    def polyface3d(self) -> Polyface3D:
+        return self._polyface3d
 
     @property
     def face3d(self) -> Face3D:
