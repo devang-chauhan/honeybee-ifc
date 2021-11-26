@@ -186,7 +186,8 @@ class Model:
                            orphaned_apertures=apertures, orphaned_doors=doors,
                            orphaned_shades=shades)
 
-        # hb_model.properties.radiance.add_sensor_grids(grids)
+        if IfcEntity.space.value in self.elements:
+            hb_model.properties.radiance.add_sensor_grids(grids)
 
         if not file_name:
             file_name = self.ifc_file_path.stem
