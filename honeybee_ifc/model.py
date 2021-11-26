@@ -23,7 +23,7 @@ from .shade import Shade
 from .space import Space
 
 
-class IfcEntity(Enum):
+class IfcElement(Enum):
     """An enumeration of IFC entities that can be imported."""
 
     window = 'IfcWindow'
@@ -40,7 +40,7 @@ class Model:
         ifc_file_path: A string. The path to the IFC file.
     """
 
-    def __init__(self, ifc_file_path: str, elements: List[IfcEntity] = None,
+    def __init__(self, ifc_file_path: str, elements: List[IfcElement] = None,
                  extract_walls: bool = False) -> None:
         self.ifc_file_path = self._validate_path(ifc_file_path)
         self.ifc_file = ifcopenshell.open(self.ifc_file_path)
@@ -159,25 +159,25 @@ class Model:
                 faces.extend(wall.to_honeybee())
             print("walls done")
 
-        if IfcEntity.window.value in self.elements:
+        if IfcElement.window.value in self.elements:
             apertures = [window.to_honeybee() for window in self.windows]
             print("apertures done")
 
-        if IfcEntity.door.value in self.elements:
+        if IfcElement.door.value in self.elements:
             doors = [door.to_honeybee() for door in self.doors]
             print("doors done")
 
-        if IfcEntity.slab.value in self.elements:
+        if IfcElement.slab.value in self.elements:
             for slab in self.slabs:
                 faces.extend(slab.to_honeybee())
             print("slabs done")
 
-        if IfcEntity.shade.value in self.elements:
+        if IfcElement.shade.value in self.elements:
             for shade in self.shades:
                 shades.extend(shade.to_honeybee())
             print("shade done")
 
-        if IfcEntity.space.value in self.elements:
+        if IfcElement.space.value in self.elements:
             for space in self.spaces:
                 grids.append(space.get_grids(size=0.3))
             print("grids done")
@@ -186,7 +186,7 @@ class Model:
                            orphaned_apertures=apertures, orphaned_doors=doors,
                            orphaned_shades=shades)
 
-        if IfcEntity.space.value in self.elements:
+        if IfcElement.space.value in self.elements:
             hb_model.properties.radiance.add_sensor_grids(grids)
 
         if not file_name:
