@@ -3,6 +3,7 @@
 import ifcopenshell
 from typing import List
 from ifcopenshell.entity_instance import entity_instance as IfcElement
+from ladybug_geometry.geometry3d import Polyface3D
 from honeybee_radiance.sensorgrid import SensorGrid
 from honeybee.typing import clean_and_id_string
 from .element import Element
@@ -16,10 +17,14 @@ class Space(Element):
         settings: ifcopenshell.geom.settings object.
     """
 
-    def __init__(self, space: IfcElement, settings: ifcopenshell.geom.settings) -> None:
-        super().__init__(space, settings)
+    def __init__(self, space: IfcElement) -> None:
+        super().__init__(space)
         self.space = space
-        self.settings = settings
+        self._polyface3d = self.to_polyface3d()
+
+    @property
+    def polyface3d(self) -> Polyface3D:
+        return self._polyface3d
 
     def get_grids(self, offset=0.75, size=0.6) -> List[SensorGrid]:
         """Generate sensor grids from the floor of the space."""
