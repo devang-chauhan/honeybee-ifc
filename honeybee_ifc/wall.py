@@ -21,6 +21,12 @@ class Wall(Element):
 
     def __init__(self, wall: IfcElement, representation: str = 'mesh') -> None:
         super().__init__(wall, representation)
+        self.wall = wall
+        self.body = self.wall.Representation.Representations[0].RepresentationIdentifier
+
+    @ staticmethod
+    def has_parts(element) -> bool:
+        pass
 
     def to_honeybee(self) -> List[Face]:
         """Get a list of Honeybee Face objects for the wall."""
