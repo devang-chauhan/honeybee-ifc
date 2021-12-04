@@ -50,6 +50,7 @@ class Element:
         """Check if the Brep can be created from a Shape."""
 
         if self.representation == 'brep':
+            # TODO: Capture this repeated code in a helper function
             shape = geom.create_shape(self.settings(), self.element)
             occ_shape = shape.geometry.brep_data
             fc_shape = Part.Shape()
@@ -62,7 +63,7 @@ class Element:
 
     def to_polyface3d(self) -> Polyface3D:
         """Polyface3D object from an IFC element."""
-
+        # TODO: Capture this repeated code in a helper function
         shape = geom.create_shape(self.settings(), self.element)
         occ_shape = shape.geometry.brep_data
         fc_shape = Part.Shape()
@@ -96,3 +97,11 @@ class Element:
                    for i in range(0, len(faces), 3)]
 
         return face3ds
+
+    def to_freecad_shape(self) -> FreeCAD.Part.Shape:
+        """Get a FreeCAD Shape object for the element."""
+        ifc_shapes = []
+        for part in self.element.IsDecomposedBy[0].RelatedObjects:
+            ifc_shapes.append(geom.create_shape(self.settings(), part))
+
+        # TODO: Capture this repeated code in a helper function
