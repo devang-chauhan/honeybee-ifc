@@ -56,14 +56,14 @@ class Model:
         self.extract_walls = extract_walls
         if self.extract_walls:
             self._extract_walls()
-        if not self.elements:
+        if self.elements:
             self._extract_elements()
 
     @staticmethod
     def _elements(elements):
         if elements:
-            return (item.value for item in elements)
-        return ()
+            return [item.value for item in elements]
+        return [item.value for item in IfcElement]
 
     @staticmethod
     def _validate_path(path: str) -> pathlib.Path:
@@ -154,30 +154,30 @@ class Model:
         print("Starting Honeybee translation! \n")
         faces, apertures, doors, shades, grids = [], [], [], [], []
 
-        if self.extract_walls:
+        if self.walls:
             for wall in self.walls:
                 faces.extend(wall.to_honeybee())
             print("walls done")
 
-        if IfcElement.window.value in self.elements:
+        if self.windows:
             apertures = [window.to_honeybee() for window in self.windows]
             print("apertures done")
 
-        if IfcElement.door.value in self.elements:
+        if self.doors:
             doors = [door.to_honeybee() for door in self.doors]
             print("doors done")
 
-        if IfcElement.slab.value in self.elements:
+        if self.slabs:
             for slab in self.slabs:
                 faces.extend(slab.to_honeybee())
             print("slabs done")
 
-        if IfcElement.shade.value in self.elements:
+        if self.shades:
             for shade in self.shades:
                 shades.extend(shade.to_honeybee())
             print("shade done")
 
-        if IfcElement.space.value in self.elements:
+        if self.spaces:
             for space in self.spaces:
                 grids.append(space.get_grids(size=0.3))
             print("grids done")
@@ -186,7 +186,7 @@ class Model:
                            orphaned_apertures=apertures, orphaned_doors=doors,
                            orphaned_shades=shades)
 
-        if IfcElement.space.value in self.elements:
+        if self.spaces:
             hb_model.properties.radiance.add_sensor_grids(grids)
 
         if not file_name:
